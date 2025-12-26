@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | 메쉬 캡쳐 툴</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Unity Web Player | 메쉬 캡쳐 툴</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif;
+      background: transparent;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+
+    .controls-wrapper {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .controls-wrapper>* {
+      pointer-events: auto;
+    }
+
+    .instructions {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      /*box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);*/
+      padding: 15px 25px;
+      max-width: 550px;
+      width: 100%;
+    }
+
+    .instructions h3 {
+      font-size: 16px;
+      color: #667eea;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .instructions ol {
+      padding-left: 20px;
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .instructions li {
+      margin-bottom: 6px;
+    }
+
+    .upload-container {
+      background: white;
+      border-radius: 16px;
+      /*box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);*/
+      padding: 20px 30px;
+      text-align: center;
+      max-width: 550px;
+      width: 100%;
+      height: fit-content;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .upload-container label:first-child {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      padding: 10px 24px;
+      background: #f8f9fa;
+      border: 2px dashed #667eea;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      color: #667eea;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .file-input-label:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      /*box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);*/
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      /*box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);*/
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .file-list {
+      background: white;
+      border-radius: 12px;
+      /*box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);*/
+      padding: 20px 30px;
+      max-width: 550px;
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .file-list h4 {
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .file-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .file-name-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+
+    .file-size {
+      color: #888;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 20px;
+    }
+  </style>
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" width=1000 height=1000 tabindex="-1"></canvas>
+    <div class="instructions">
+      <h3>📌 사용 방법</h3>
+      <ol>
+        <li>"파일 선택" 버튼을 클릭하여 .unity3d 파일을 선택하세요</li>
+        <li>여러 파일을 동시에 선택할 수 있습니다</li>
+        <li>"모델 불러오기" 버튼을 클릭하면, 파일들이 자동으로 캡쳐됩니다</li>
+      </ol>
+    </div>
+
+    <div class="upload-container">
+      <label>Unity 3D 파일을 입력하세요</label>
+      <input type="file" id="ModelUpload" accept=".unity3d" multiple>
+      <label for="ModelUpload" class="file-input-label">파일 선택</label>
+      <button onclick="LoadModel()">모델 불러오기</button>
+    </div>
+
+    <div class="file-list" id="fileList">
+      <h4>선택된 파일</h4>
+      <div class="empty-state">파일을 선택하면 여기에 표시됩니다</div>
+    </div>
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+    </div>
+    <div id="unity-warning"> </div>
+
+  </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Build_JustOpen.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/Build_JustOpen.data.unityweb",
+        frameworkUrl: buildUrl + "/Build_JustOpen.framework.js.unityweb",
+        codeUrl: buildUrl + "/Build_JustOpen.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "메쉬 캡쳐 툴",
+        productVersion: "0.1.0",
+        showBanner: unityShowBanner,
+      };
+
+      // By default, Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
+      // If you would like all file writes inside Unity Application.persistentDataPath
+      // directory to automatically persist so that the contents are remembered when
+      // the user revisits the site the next time, uncomment the following line:
+      // config.autoSyncPersistentDataPath = true;
+      // This autosyncing is currently not the default behavior to avoid regressing
+      // existing user projects that might rely on the earlier manual
+      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
+      // expected to change.
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        document.querySelector("#unity-container").className = "unity-mobile";
+        canvas.className = "unity-mobile";
+
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // config.devicePixelRatio = 1;
+
+
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+        canvas.style.width = "500px";
+        canvas.style.height = "500px";
+      }
+
+       document.querySelector("#unity-loading-bar").style.display = "block";
+
+    var script = document.createElement("script");
+    var myGameInstance = null;
+
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+      }).then((unityInstance) => {
+        myGameInstance = unityInstance;
+        window.Module = unityInstance.Module;
+        document.querySelector("#unity-loading-bar").style.display = "none";
+
+
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+
+      document.body.appendChild(script);
+
+    function ClickFileBtn() {
+
+    }
+
+    function LoadModel() {
+      const fileInput = document.getElementById('ModelUpload');
+      const files = fileInput.files;
+
+      if (!files || files.length === 0) {
+        console.log('파일이 선택되지 않았습니다.');
+        return;
+      }
+
+      let urlList = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        var objectURL = URL.createObjectURL(file);
+
+        var bundleName = file.name;
+        bundleName = bundleName.replace(".unity3d", "");
+
+        objectURL = objectURL + "$" + bundleName
+
+        urlList.push(objectURL);
+      }
+
+      // | 로 하나의 문자열로 결합
+      const joinedURL = urlList.join("|");
+
+      // Unity로 전달
+      myGameInstance.SendMessage(
+        'FindDotMgr',
+        'LoadFileList',
+        joinedURL
+      );
+
+      console.log("Send to Unity:", joinedURL);
+    }
+
+function WebCanvasCapture(ptr, size, imgFileName) {
+  const Module = window.Module;
+  if (!Module || !Module.HEAPU8) {
+    console.error("Module/HEAPU8 not ready.");
+    return;
+  }
+
+  // 파일명 sanitize
+  const safeName = String(imgFileName ?? "capture")
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .trim() || "capture";
+
+  // 핵심: 새 Uint8Array(size) 만들지 말고, HEAPU8의 view를 그대로 사용 (복사 X)
+  const view = Module.HEAPU8.subarray(ptr, ptr + size);
+
+  // PNG면 image/png, JPG면 image/jpeg
+  const blob = new Blob([view], { type: "image/png" });
+
+  const a = document.createElement("a");
+  a.download = safeName.endsWith(".png") ? safeName : (safeName + ".png");
+
+  // Safari/일부 브라우저 안정성: a를 DOM에 붙였다가 클릭
+  const url = URL.createObjectURL(blob);
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+
+  // revoke는 “즉시” 하면 다운로드가 간헐적으로 실패할 수 있어 약간 딜레이 권장
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 1000);
+}
+
+
+  </script>
+
+
+
+  <script>
+    const fileInput = document.getElementById('ModelUpload');
+    const fileList = document.getElementById('fileList');
+
+    fileInput.addEventListener('change', function (e) {
+      const files = e.target.files;
+
+      // Clear previous list
+      fileList.innerHTML = '<h4>선택된 파일</h4>';
+
+      if (files.length === 0) {
+        fileList.innerHTML += '<div class="empty-state">파일을 선택하면 여기에 표시됩니다</div>';
+        return;
+      }
+
+      // Display each file
+      Array.from(files).forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name-text';
+        fileName.textContent = file.name;
+
+        const fileSize = document.createElement('div');
+        fileSize.className = 'file-size';
+        fileSize.textContent = formatFileSize(file.size);
+
+        fileItem.appendChild(fileName);
+        fileItem.appendChild(fileSize);
+        fileList.appendChild(fileItem);
+      });
+    });
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function LoadModel() {
+      const fileInput = document.getElementById('ModelUpload');
+      const files = fileInput.files;
+
+      if (!files || files.length === 0) {
+        console.log('파일이 선택되지 않았습니다.');
+        return;
+      }
+
+      let urlList = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        var objectURL = URL.createObjectURL(file);
+
+        var bundleName = file.name;
+        bundleName = bundleName.replace(".unity3d", "");
+
+        objectURL = objectURL + "$" + bundleName
+
+        urlList.push(objectURL);
+      }
+
+      // | 로 하나의 문자열로 결합
+      const joinedURL = urlList.join("|");
+
+      // Unity로 전달
+      myGameInstance.SendMessage(
+        'JustOpen',
+        'LoadFileList',
+        joinedURL
+      );
+
+      console.log("Send to Unity:", joinedURL);
+    }
+  </script>
+
+
+
+</body>
+
+</html>
