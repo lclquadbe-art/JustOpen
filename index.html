@@ -141,16 +141,28 @@
       transform: translateY(0);
     }
 
-    .file-list {
-      background: white;
-      border-radius: 12px;
-      /*box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);*/
-      padding: 20px 30px;
-      max-width: 550px;
-      width: 100%;
-      max-height: 300px;
-      overflow-y: auto;
-    }
+   /* 파일 리스트 카드 자체는 '프레임' 역할만 */
+.file-list{
+  background: white;
+  border-radius: 12px;
+  padding: 20px 30px;
+  max-width: 550px;
+  width: 100%;
+  /* 스크롤은 내부 컨텐츠가 담당하도록 변경 */
+  overflow: hidden;
+}
+
+/* 실제 스크롤이 생길 영역(리스트 컨텐츠) */
+#bottleList, #capList{
+  max-height: 240px;     /* 원하는 높이로 조절 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 스크롤이 생길 때 내용이 가장자리에 붙지 않게(선택) */
+#bottleList .file-item, #capList .file-item{
+  margin-right: 6px; /* 스크롤바 공간 확보 느낌(선택) */
+}
 
     .file-list h4 {
       font-size: 15px;
