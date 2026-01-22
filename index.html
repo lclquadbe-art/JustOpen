@@ -406,6 +406,77 @@ function WebCanvasCapture(ptr, size, imgFileName) {
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
+
+function ErrorFunction(jsonStr)
+{
+    const str = (typeof jsonStr === "number") ? UTF8ToString(jsonStr) : String(jsonStr);
+
+  let data;
+  try {
+    data = JSON.parse(str);
+  } catch (e) {
+    console.error("[SendSimpleExcelJson] JSON parse error", e);
+    const errorP = document.getElementById("errorLogOutput");
+    if (errorP) errorP.textContent = "JSON parse error.";
+    return;
+  }
+
+  // 1) 지금 들어온 데이터 형태를 먼저 확인
+  console.log("[debug] typeof data:", typeof data);
+  console.log("[debug] isArray(data):", Array.isArray(data));
+  console.log("[debug] data keys:", (data && typeof data === "object") ? Object.keys(data) : null);
+
+  // 2) modelDataList를 다양한 케이스로 추출
+  const list =
+    Array.isArray(data) ? data :
+    Array.isArray(data?.modelDataList) ? data.modelDataList :
+    Array.isArray(data?.ModelDataList) ? data.ModelDataList :
+    Array.isArray(data?.modelData_list) ? data.modelData_list :
+    [];
+
+  console.log("[debug] model list length:", list.length);
+  if (list[0]) console.log("[debug] first model keys:", Object.keys(list[0]));
+
+  // 3) errorLog 모으기 (키 변형/타입 변형 대응)
+  const allErrorLogs = [];
+
+  for (let i = 0; i < list.length; i++) {
+    const m = list[i] || {};
+    const modelName = (typeof m.modelName === "string") ? m.modelName : `Model#${i}`;
+
+    // errorLog 키 후보들
+    let logs =
+      m.errorLog ?? m.errorLogs ?? m.ErrorLog ?? m.ErrorLogs ?? null;
+
+    // logs가 문자열이면 줄바꿈/쉼표 기준으로 분해(혹시 stringify된 경우)
+    if (typeof logs === "string") {
+      logs = logs.split(/\r?\n|\\n|,/g);
+    }
+
+    if (Array.isArray(logs)) {
+      for (let j = 0; j < logs.length; j++) {
+        const v = logs[j];
+        if (typeof v === "string" && v.trim()) {
+          allErrorLogs.push(`[${modelName}] ${v}`);
+        }
+      }
+    } else {
+      // 디버그: errorLog가 왜 배열이 아닌지 확인용
+      console.log(`[debug] ${modelName} logs type:`, typeof logs, logs);
+    }
+  }
+
+  console.log("[debug] allErrorLogs:", allErrorLogs);
+
+  // 4) 출력
+  const errorP = document.getElementById("errorLogOutput");
+  if (!errorP) return;
+
+  errorP.style.whiteSpace = "pre-wrap";
+  errorP.textContent = allErrorLogs.length ? allErrorLogs.join("\n") : "No errors.";
+
+}
+
   </script>
 
     <p style="color:#fca41f;" id="errorLogOutput"> </p>
