@@ -481,7 +481,7 @@ function sendJsonToViewer(json)
 {
   const viewerUrl = 'https://lclquadbe-art.github.io/JustOpen/log.html';
 
-     localStorage.setItem('modelJsonData', json);
+    localStorage.setItem('modelJsonData', JSON.stringify(json));
     window.open(viewerUrl, '_blank');
 }
 
