@@ -514,17 +514,16 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // 이 부분이 중요! LocalStorage에서 로드
     if (!jsonLoaded) {
-        const storedData = localStorage.getItem('modelJsonData');
-        if (storedData) {
-            try {
-                const parsedData = JSON.parse(storedData);
-                document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
-                parseJSON();
-                jsonLoaded = true;
-            } catch (error) {
-                console.error('LocalStorage 데이터 파싱 오류:', error);
-            }
-        }
+   const storedData = localStorage.getItem('modelJsonData');
+if (storedData) {
+    try {
+        const parsedData = JSON.parse(storedData); // ⭐ 이미 JSON.parse 한 번 해야 함
+        document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
+        parseJSON();
+    } catch (error) {
+        console.error('LocalStorage 데이터 파싱 오류:', error);
+    }
+}
     }
 });
         
