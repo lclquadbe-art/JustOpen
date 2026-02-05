@@ -502,7 +502,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (jsonData) {
         try {
             const decodedData = decodeURIComponent(jsonData);
-            const parsedData = JSON.parse(decodedData);
+            const parsedData = (decodedData);
             
             document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
             parseJSON();
@@ -517,7 +517,7 @@ window.addEventListener('DOMContentLoaded', function() {
    const storedData = localStorage.getItem('modelJsonData');
 if (storedData) {
     try {
-        const parsedData = JSON.parse(storedData); // ⭐ 이미 JSON.parse 한 번 해야 함
+        const parsedData = (storedData); // ⭐ 이미 JSON.parse 한 번 해야 함
         document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
         parseJSON();
     } catch (error) {
