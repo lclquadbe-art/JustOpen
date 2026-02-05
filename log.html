@@ -490,6 +490,44 @@
             
         };
 
+
+// LocalStorage에서 로드하는 코드
+window.addEventListener('DOMContentLoaded', function() {
+    let jsonLoaded = false;
+
+    // URL 파라미터에서 로드
+    const urlParams = new URLSearchParams(window.location.search);
+    const jsonData = urlParams.get('data');
+    
+    if (jsonData) {
+        try {
+            const decodedData = decodeURIComponent(jsonData);
+            const parsedData = JSON.parse(decodedData);
+            
+            document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
+            parseJSON();
+            jsonLoaded = true;
+        } catch (error) {
+            console.error('URL 파라미터 파싱 오류:', error);
+        }
+    }
+
+    // 이 부분이 중요! LocalStorage에서 로드
+    if (!jsonLoaded) {
+        const storedData = localStorage.getItem('modelJsonData');
+        if (storedData) {
+            try {
+                const parsedData = JSON.parse(storedData);
+                document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
+                parseJSON();
+                jsonLoaded = true;
+            } catch (error) {
+                console.error('LocalStorage 데이터 파싱 오류:', error);
+            }
+        }
+    }
+});
+        
         // 페이지 로드시 샘플 데이터 자동 입력
         document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
     </script>
