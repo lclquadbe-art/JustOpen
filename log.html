@@ -494,7 +494,7 @@
 // LocalStorage에서 로드하는 코드
 window.addEventListener('DOMContentLoaded', function() {
     let jsonLoaded = false;
-
+    
     // URL 파라미터에서 로드
     const urlParams = new URLSearchParams(window.location.search);
     const jsonData = urlParams.get('data');
@@ -502,7 +502,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (jsonData) {
         try {
             const decodedData = decodeURIComponent(jsonData);
-            const parsedData = (decodedData);
+            const parsedData = JSON.parse(decodedData); // ← JSON.parse 필요!
             
             document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
             parseJSON();
@@ -511,19 +511,27 @@ window.addEventListener('DOMContentLoaded', function() {
             console.error('URL 파라미터 파싱 오류:', error);
         }
     }
-
-    // 이 부분이 중요! LocalStorage에서 로드
+    
+    // LocalStorage에서 로드
     if (!jsonLoaded) {
-   const storedData = localStorage.getItem('modelJsonData');
-if (storedData) {
-    try {
-        const parsedData = (storedData); // ⭐ 이미 JSON.parse 한 번 해야 함
-        document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
-        parseJSON();
-    } catch (error) {
-        console.error('LocalStorage 데이터 파싱 오류:', error);
-    }
-}
+        const storedData = localStorage.getItem('modelJsonData');
+        if (storedData) {
+            try {
+                // 첫 번째 파싱
+                let parsedData = JSON.parse(storedData);
+                
+                // 혹시 두 번 stringify되었다면 한 번 더 파싱
+                if (typeof parsedData === 'string') {
+                    parsedData = JSON.parse(parsedData);
+                }
+                
+                document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
+                parseJSON();
+            } catch (error) {
+                console.error('LocalStorage 데이터 파싱 오류:', error);
+                console.log('원본 데이터:', storedData.substring(0, 100));
+            }
+        }
     }
 });
         
