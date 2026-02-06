@@ -161,7 +161,11 @@
             color: #dc3545;
         }
 
-
+        .highlight-item {
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            font-weight: bold;
+        }
 
         .count-badge {
             display: inline-block;
@@ -243,6 +247,38 @@
             font-size: 0.9em;
             margin-top: 5px;
         }
+
+        .search-type-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .search-type-btn {
+            padding: 8px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-type-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #5568d3;
+        }
+
+        .search-type-btn:hover {
+            background: #d0d0d0;
+        }
+
+        .search-type-btn.active:hover {
+            background: #5568d3;
+        }
     </style>
 </head>
 <body>
@@ -263,7 +299,18 @@
         <div id="searchSection" style="display: none;">
             <div class="upload-section">
                 <h2>🔎 모델 검색 및 필터</h2>
+                
+                <div class="search-type-selector">
+                    <button class="search-type-btn active" onclick="setSearchType('model')" id="btnSearchModel">
+                        📦 모델명 검색
+                    </button>
+                    <button class="search-type-btn" onclick="setSearchType('animation')" id="btnSearchAnimation">
+                        🎬 애니메이션 검색
+                    </button>
+                </div>
+
                 <input type="text" id="searchInput" placeholder="모델명을 입력하세요" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
+                
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button onclick="searchModels()">🔍 검색</button>
                     <button onclick="showErrorModels()" style="background: #dc3545;">⚠️ 에러 모델만 보기</button>
@@ -281,6 +328,8 @@
 
     <script>
         let allModelsData = []; // 전체 모델 데이터 저장
+        let currentSearchType = 'model'; // 'model' 또는 'animation'
+        let lastSearchTerm = ''; // 마지막 검색어 저장
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -293,6 +342,25 @@
                 reader.readAsText(file);
             }
         });
+
+        function setSearchType(type) {
+            currentSearchType = type;
+            
+            // 버튼 활성화 상태 변경
+            document.getElementById('btnSearchModel').classList.toggle('active', type === 'model');
+            document.getElementById('btnSearchAnimation').classList.toggle('active', type === 'animation');
+            
+            // placeholder 변경
+            const searchInput = document.getElementById('searchInput');
+            if (type === 'model') {
+                searchInput.placeholder = '모델명을 입력하세요';
+            } else {
+                searchInput.placeholder = '애니메이션 이름을 입력하세요 (예: Idle, Walk, Run)';
+            }
+            
+            // 검색 정보 초기화
+            document.getElementById('searchInfo').innerHTML = '';
+        }
 
         function parseJSON() {
             const input = document.getElementById('jsonInput').value;
@@ -316,7 +384,7 @@
             }
         }
 
-        function displayData(models, keepOriginalData = false) {
+        function displayData(models, keepOriginalData = false, searchTerm = '') {
             if (!keepOriginalData) {
                 allModelsData = models; // 전체 데이터 저장
             }
@@ -386,7 +454,7 @@
                         </td>
                         <td>${createListCell(model.childRenderNameArr, 'render-' + index)}</td>
                         <td>${createListCell(model.childScaleArr, 'scale-' + index)}</td>
-                        <td>${createListCell(model.animClipArr, 'anim-' + index)}</td>
+                        <td>${createListCell(model.animClipArr, 'anim-' + index, false, searchTerm)}</td>
                         <td>${createListCell(model.pointNameArr, 'point-' + index)}</td>
                         <td>${createListCell(model.errorLog, 'error-' + index, true)}</td>
                     </tr>
@@ -413,20 +481,37 @@
                 return;
             }
 
-            const filteredModels = allModelsData.filter(model => 
-                model.modelName.toLowerCase().includes(searchTerm)
-            );
+            lastSearchTerm = searchTerm;
+            let filteredModels = [];
+            let searchTypeText = '';
+
+            if (currentSearchType === 'model') {
+                // 모델명 검색
+                filteredModels = allModelsData.filter(model => 
+                    model.modelName.toLowerCase().includes(searchTerm)
+                );
+                searchTypeText = '모델명';
+            } else {
+                // 애니메이션 검색
+                filteredModels = allModelsData.filter(model => 
+                    model.animClipArr.some(anim => 
+                        anim.toLowerCase().includes(searchTerm)
+                    )
+                );
+                searchTypeText = '애니메이션';
+            }
 
             if (filteredModels.length === 0) {
                 document.getElementById('searchInfo').innerHTML = 
-                    `<span style="color: #dc3545;">⚠️ "${searchTerm}"에 해당하는 모델을 찾을 수 없습니다.</span>`;
+                    `<span style="color: #dc3545;">⚠️ "${searchTerm}"에 해당하는 ${searchTypeText}을(를) 찾을 수 없습니다.</span>`;
+                displayData([], true);
                 return;
             }
 
             document.getElementById('searchInfo').innerHTML = 
-                `<span style="color: #28a745;">✅ "${searchTerm}"로 검색한 결과: ${filteredModels.length}개 모델</span>`;
+                `<span style="color: #28a745;">✅ ${searchTypeText} "${searchTerm}"로 검색한 결과: ${filteredModels.length}개 모델</span>`;
 
-            displayData(filteredModels, true);
+            displayData(filteredModels, true, currentSearchType === 'animation' ? searchTerm : '');
         }
 
         function showErrorModels() {
@@ -450,6 +535,7 @@
         function resetSearch() {
             document.getElementById('searchInput').value = '';
             document.getElementById('searchInfo').innerHTML = '';
+            lastSearchTerm = '';
             displayData(allModelsData, true);
         }
 
@@ -462,7 +548,7 @@
             });
         });
 
-        function createListCell(items, id, isError = false) {
+        function createListCell(items, id, isError = false, highlightTerm = '') {
             if (items.length === 0) {
                 return `<span class="empty-cell">-</span>`;
             }
@@ -473,7 +559,9 @@
             let html = `<div>${countBadge}</div>`;
             
             items.forEach(item => {
-                html += `<span class="${itemClass}">${escapeHtml(item)}</span>`;
+                const shouldHighlight = highlightTerm && item.toLowerCase().includes(highlightTerm.toLowerCase());
+                const finalClass = shouldHighlight ? `${itemClass} highlight-item` : itemClass;
+                html += `<span class="${finalClass}">${escapeHtml(item)}</span>`;
             });
             
             return html;
@@ -502,7 +590,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (jsonData) {
         try {
             const decodedData = decodeURIComponent(jsonData);
-            const parsedData = JSON.parse(decodedData); // ← JSON.parse 필요!
+            const parsedData = JSON.parse(decodedData);
             
             document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
             parseJSON();
