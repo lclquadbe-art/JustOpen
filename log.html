@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 95vw; /* 1200px에서 95vw로 변경 */
             margin: 0 auto;
         }
 
@@ -108,6 +108,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: auto; /* fixed에서 auto로 변경 */
         }
 
         th {
@@ -119,6 +120,7 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            white-space: nowrap;
         }
 
         td {
@@ -143,6 +145,7 @@
             font-weight: bold;
             color: #667eea;
             font-size: 1.1em;
+            white-space: nowrap;
         }
 
         .list-item {
@@ -153,12 +156,14 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             display: block;
+            word-break: break-word; /* 긴 에러 메시지 줄바꿈 */
         }
 
         .error-list-item {
             background: #ffe6e6;
             border-left: 3px solid #dc3545;
             color: #dc3545;
+            white-space: pre-wrap; /* 에러 로그 줄바꿈 유지 */
         }
 
         .highlight-item {
@@ -429,12 +434,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 15%;">모델명</th>
-                            <th style="width: 15%;">렌더링 객체</th>
-                            <th style="width: 20%;">스케일 정보</th>
-                            <th style="width: 15%;">애니메이션</th>
-                            <th style="width: 10%;">포인트</th>
-                            <th style="width: 25%;">에러 로그</th>
+                            <th>모델명</th>
+                            <th>렌더링 객체</th>
+                            <th>스케일 정보</th>
+                            <th>애니메이션</th>
+                            <th>포인트</th>
+                            <th style="min-width: 400px;">에러 로그</th>
                         </tr>
                     </thead>
                     <tbody>
