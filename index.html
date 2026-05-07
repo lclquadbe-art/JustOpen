@@ -485,29 +485,32 @@ function sendJsonToViewer(json)
     window.open(viewerUrl, '_blank');
 }
 
+let fullLogData = "";
 function WebRenderName(strPtr) {
-        // 1. 데이터 유효성 검사 (포인터가 0이면 빈 문자열 처리)
-        if (!strPtr) return;
+  if (!strPtr) return;
 
-        // 2. UTF8ToString은 emscripten 환경에서만 작동합니다.
-        // 일반 브라우저 스크립트라면 에러가 날 수 있으므로 체크가 필요합니다.
-        try {
-       
-            var text =strPtr;
-            
-            var pTag = document.createElement("p");
-            
-            // pre-wrap을 쓰면 너비를 넘어갈 때 자동 줄바꿈이 되어 더 가독성이 좋습니다.
-            pTag.style.whiteSpace = "pre-wrap"; 
-            pTag.style.fontFamily = "monospace"; // 엑셀 데이터처럼 열 맞춤을 보기 좋게 함
-            pTag.style.border = "1px solid #ccc";
-            pTag.style.padding = "10px";
-            
-            pTag.textContent = text;
-            document.body.appendChild(pTag);
-        } catch (e) {
-            console.error("UTF8ToString 변환 중 오류 발생: ", e);
-        }
+    // 1. 데이터 누적 (+)
+    // strPtr이 Emscripten 포인터라면 UTF8ToString(strPtr) 과정이 필요할 수 있습니다.
+    fullLogData += strPtr;
+
+    // 2. 컨테이너 가져오기 혹은 생성
+    let logContainer = document.getElementById("log-display");
+    if (!logContainer) {
+        logContainer = document.createElement("pre");
+        logContainer.id = "log-display";
+        logContainer.style.whiteSpace = "pre-wrap";
+        logContainer.style.fontFamily = "monospace";
+        logContainer.style.border = "1px solid #ccc";
+        logContainer.style.padding = "10px";
+        document.body.appendChild(logContainer);
+    }
+
+    // 3. 전체 내용을 한 번에 업데이트
+    // textContent는 HTML 태그를 해석하지 않아 안전하고 빠릅니다.
+    logContainer.textContent = fullLogData;
+
+    // (선택 사항) 로그가 추가될 때마다 화면을 가장 아래로 스크롤합니다.
+    //window.scrollTo(0, document.body.scrollHeight);
     }
 
   </script>
@@ -515,6 +518,7 @@ function WebRenderName(strPtr) {
     <p style="color:#fca41f;" id="errorLogOutput"> </p>
  <p id="jsonOutput"> </p>
  <p style="color:#667eea;" id="jsonSimpleOutput"> </p>
+ <div id="log-container"></div>
 
 
 </body>
