@@ -485,6 +485,31 @@ function sendJsonToViewer(json)
     window.open(viewerUrl, '_blank');
 }
 
+function WebRenderName(strPtr) {
+        // 1. 데이터 유효성 검사 (포인터가 0이면 빈 문자열 처리)
+        if (!strPtr) return;
+
+        // 2. UTF8ToString은 emscripten 환경에서만 작동합니다.
+        // 일반 브라우저 스크립트라면 에러가 날 수 있으므로 체크가 필요합니다.
+        try {
+       
+            var text =strPtr;
+            
+            var pTag = document.createElement("p");
+            
+            // pre-wrap을 쓰면 너비를 넘어갈 때 자동 줄바꿈이 되어 더 가독성이 좋습니다.
+            pTag.style.whiteSpace = "pre-wrap"; 
+            pTag.style.fontFamily = "monospace"; // 엑셀 데이터처럼 열 맞춤을 보기 좋게 함
+            pTag.style.border = "1px solid #ccc";
+            pTag.style.padding = "10px";
+            
+            pTag.textContent = text;
+            document.body.appendChild(pTag);
+        } catch (e) {
+            console.error("UTF8ToString 변환 중 오류 발생: ", e);
+        }
+    }
+
   </script>
 
     <p style="color:#fca41f;" id="errorLogOutput"> </p>
