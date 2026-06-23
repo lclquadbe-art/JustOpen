@@ -1,252 +1,455 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="ko">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>메쉬,애니메이션,사이즈 열어보기 - 4,5차 엑셀데이터는 없음 이름확인 못함(5/4)</title>
+    <title>3D 모델 검증 툴</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <style>
+      *, *::before, *::after {
+        margin: 0; padding: 0; box-sizing: border-box;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif;
-      background: transparent;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-    }
+      :root {
+        --accent: #4F6EF7;
+        --accent-dark: #3A56D4;
+        --accent-subtle: #EEF1FE;
+        --surface: #FFFFFF;
+        --surface-raised: #F7F8FC;
+        --border: #E4E7F0;
+        --text-primary: #1A1D2E;
+        --text-secondary: #6B7280;
+        --text-muted: #9CA3AF;
+        --warning: #F59E0B;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+        --panel-w: 300px;
+      }
 
-    .controls-wrapper {
-      position: fixed;
-      top: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      z-index: 1000;
-      pointer-events: none;
-    }
+      body {
+        font-family: var(--font);
+        background: transparent;
+        color: var(--text-primary);
+      }
 
-    .controls-wrapper>* {
-      pointer-events: auto;
-    }
+      /* ── 전체 레이아웃: 사이드바 + 캔버스 ── */
+      .layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 0 16px 16px;
+      }
 
-    .instructions {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 15px 25px;
-      max-width: 550px;
-      width: 100%;
-    }
+      /* ── 왼쪽 사이드바 패널 ── */
+      .sidebar {
+        width: var(--panel-w);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-    .instructions h3 {
-      font-size: 16px;
-      color: #667eea;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
+      /* ── 카드 기본 ── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+      }
 
-    .instructions ol {
-      padding-left: 20px;
-      color: #555;
-      font-size: 14px;
-      line-height: 1.6;
-    }
+      /* ── 사용 방법 ── */
+      .guide-card { padding: 14px 16px; }
 
-    .instructions li {
-      margin-bottom: 6px;
-    }
+      .guide-header {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 10px;
+      }
 
-    .upload-container {
-      background: white;
-      border-radius: 16px;
-      padding: 20px 30px;
-      text-align: center;
-      max-width: 550px;
-      width: 100%;
-      height: fit-content;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
+      .guide-icon {
+        width: 18px; height: 18px;
+        background: var(--accent);
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
 
-    .upload-container label:first-child {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-      margin: 0;
-      white-space: nowrap;
-    }
+      .guide-icon svg { width: 11px; height: 11px; fill: white; }
 
-    input[type="file"] {
-      display: none;
-    }
+      .guide-header span {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
 
-    .file-input-label {
-      display: inline-block;
-      padding: 10px 24px;
-      background: #f8f9fa;
-      border: 2px dashed #667eea;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-      color: #667eea;
-      font-weight: 500;
-      white-space: nowrap;
-    }
+      .guide-steps { display: flex; flex-direction: column; gap: 8px; }
 
-    .file-input-label:hover {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
+      .guide-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
 
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      padding: 10px 30px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-    }
+      .step-num {
+        width: 18px; height: 18px;
+        background: var(--accent-subtle);
+        color: var(--accent);
+        border-radius: 50%;
+        font-size: 10px;
+        font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
 
-    button:hover {
-      transform: translateY(-2px);
-    }
+      /* ── 업로드 카드 ── */
+      .upload-card {
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-    button:active {
-      transform: translateY(0);
-    }
+      .upload-label-text {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
 
-    .file-list {
-      background: white;
-      border-radius: 12px;
-      padding: 20px 30px;
-      max-width: 550px;
-      width: 100%;
-      max-height: 250px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
+      .upload-actions {
+        display: flex;
+        gap: 8px;
+      }
 
-    .file-list h4 {
-      font-size: 15px;
-      color: #333;
-      margin-bottom: 12px;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
+      input[type="file"] { display: none; }
 
-    .file-list-content {
-      flex: 1;
-      overflow-y: auto;
-    }
+      .btn-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 14px;
+        background: var(--surface-raised);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        transition: border-color 0.15s, background 0.15s;
+        user-select: none;
+        flex: 1;
+        justify-content: center;
+      }
 
-    .file-list-content::-webkit-scrollbar {
-      width: 8px;
-    }
+      .btn-file:hover {
+        border-color: var(--accent);
+        background: var(--accent-subtle);
+        color: var(--accent);
+      }
 
-    .file-list-content::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
+      .btn-file svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-    .file-list-content::-webkit-scrollbar-thumb {
-      background: #667eea;
-      border-radius: 4px;
-    }
+      .btn-load {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 14px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, transform 0.1s;
+        font-family: var(--font);
+        flex: 1;
+        justify-content: center;
+      }
 
-    .file-list-content::-webkit-scrollbar-thumb:hover {
-      background: #5568d3;
-    }
+      .btn-load:hover { background: var(--accent-dark); }
+      .btn-load:active { transform: scale(0.98); }
+      .btn-load svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-    .file-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      color: #555;
-    }
+      /* ── 파일 목록 카드 ── */
+      .filelist-card {
+        padding: 14px 16px;
+        max-height: 220px;
+        display: flex;
+        flex-direction: column;
+      }
 
-    .file-item:last-child {
-      margin-bottom: 0;
-    }
+      .filelist-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+      }
 
-    .file-name-text {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-right: 10px;
-    }
+      .filelist-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
 
-    .file-size {
-      color: #888;
-      font-size: 12px;
-      white-space: nowrap;
-    }
+      .filelist-count { font-size: 12px; color: var(--text-muted); }
 
-    .empty-state {
-      text-align: center;
-      color: #999;
-      font-size: 13px;
-      padding: 20px;
-    }
-  </style>
+      .filelist-scroll { flex: 1; overflow-y: auto; }
+      .filelist-scroll::-webkit-scrollbar { width: 4px; }
+      .filelist-scroll::-webkit-scrollbar-track { background: transparent; }
+      .filelist-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+      .file-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        margin-bottom: 4px;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+
+      .file-row:last-child { margin-bottom: 0; }
+      .file-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+
+      .file-row-name {
+        flex: 1;
+        font-size: 11px;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+
+      .file-row-size { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+
+      .empty-hint {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 20px 0;
+        line-height: 1.6;
+      }
+
+      /* ── Unity 캔버스 영역 ── */
+      #unity-container,
+      #unity-container.unity-desktop {
+        flex-shrink: 0;
+        align-self: flex-start;
+        display: block !important;
+        align-items: unset !important;
+        justify-content: unset !important;
+        height: auto !important;
+      }
+
+      #unity-canvas {
+        display: block;
+      }
+
+      /* ── 하단 로그 섹션 ── */
+      .log-section {
+        margin: 0 16px 16px;
+      }
+
+      .log-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        text-align: left;
+        letter-spacing: 0.03em;
+        transition: border-color 0.15s;
+      }
+
+      .log-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+      .log-chevron {
+        width: 14px; height: 14px;
+        color: var(--text-muted);
+        transition: transform 0.2s;
+        flex-shrink: 0;
+      }
+
+      .log-toggle.open .log-chevron { transform: rotate(90deg); }
+
+      .log-badge {
+        margin-left: auto;
+        background: var(--accent-subtle);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 20px;
+      }
+
+      .log-body {
+        display: none;
+        margin-top: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        padding: 14px 16px;
+      }
+
+      .log-body.open { display: block; }
+
+      #log-display {
+        white-space: pre-wrap;
+        font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+        font-size: 12px;
+        color: var(--text-primary);
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px;
+        max-height: 280px;
+        overflow-y: auto;
+        line-height: 1.6;
+      }
+
+      #errorLogOutput {
+        font-size: 12px; color: var(--warning);
+        white-space: pre-wrap; margin-top: 4px;
+        font-family: 'SF Mono', Consolas, monospace;
+      }
+
+      #jsonSimpleOutput {
+        font-size: 12px; color: var(--accent);
+        white-space: pre-wrap; margin-top: 4px;
+        font-family: 'SF Mono', Consolas, monospace;
+      }
+
+      #jsonOutput {
+        font-size: 12px; white-space: pre-wrap; margin-top: 4px;
+        font-family: 'SF Mono', Consolas, monospace;
+        color: var(--text-secondary);
+      }
+    </style>
   </head>
   <body>
-      <h1 style="text-align: center;">메쉬,애니메이션,사이즈 열어보기</h1>
-    <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" width=1000 height=1000 tabindex="-1"></canvas>
-    <div class="instructions">
-      <h3>📌 사용 방법</h3>
-      <ol>
-        <li>"파일 선택" 버튼을 클릭하여 .unity3d 파일을 선택하세요</li>
-        <li>여러 파일을 동시에 선택할 수 있습니다</li>
-        <li>"모델 불러오기" 버튼을 클릭하면, 파일들이 자동으로 캡쳐됩니다</li>
-      </ol>
-    </div>
 
-    <div class="upload-container">
-      <label>Unity 3D 파일을 입력하세요</label>
-      <input type="file" id="ModelUpload" accept=".unity3d" multiple>
-      <label for="ModelUpload" class="file-input-label">파일 선택</label>
-      <button onclick="LoadModel()">모델 불러오기</button>
-    </div>
-
-    <div class="file-list" id="fileList">
-      <h4>선택된 파일</h4>
-      <div class="file-list-content">
-        <div class="empty-state">파일을 선택하면 여기에 표시됩니다</div>
+    <!-- 로그 (최상단) -->
+    <div class="log-section" style="margin: 8px 16px 8px;">
+      <button class="log-toggle" id="logToggleBtn" onclick="toggleLog()">
+        <svg class="log-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 3l4 4-4 4"/>
+        </svg>
+        LOG OUTPUT
+        <span class="log-badge" id="logBadge">대기 중</span>
+      </button>
+      <div class="log-body" id="logBody">
+        <p id="errorLogOutput"></p>
+        <p id="jsonOutput"></p>
+        <p id="jsonSimpleOutput"></p>
+        <div id="log-container"></div>
+        <pre id="log-display" style="display:none;"></pre>
       </div>
     </div>
-    <div id="unity-loading-bar">
-      <div id="unity-logo"></div>
-      <div id="unity-progress-bar-empty">
-        <div id="unity-progress-bar-full"></div>
-      </div>
-    </div>
-    <div id="unity-warning"> </div>
 
-  </div>
+    <!-- 사이드바 + Unity 캔버스 나란히 배치 -->
+    <div class="layout">
+
+      <!-- 왼쪽 사이드바 -->
+      <div class="sidebar">
+
+        <!-- 사용 방법 -->
+        <div class="card guide-card">
+          <div class="guide-header">
+            <div class="guide-icon">
+              <svg viewBox="0 0 12 12"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm.5 7.5h-1v-1h1v1zm0-2h-1V3.5h1V6.5z"/></svg>
+            </div>
+            <span>사용 방법</span>
+          </div>
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="step-num">1</div>
+              <span>파일 선택을 눌러 .unity3d 파일을 선택하세요. 여러 파일을 동시에 선택할 수 있습니다.</span>
+            </div>
+            <div class="guide-step">
+              <div class="step-num">2</div>
+              <span>모델 불러오기를 클릭하면 검증툴이 파일을 로드하고 3D 뷰어에 모델이 표시됩니다.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 업로드 컨트롤 -->
+        <div class="card upload-card">
+          <span class="upload-label-text">Unity 3D 파일</span>
+          <input type="file" id="ModelUpload" accept=".unity3d" multiple>
+          <div class="upload-actions">
+            <label for="ModelUpload" class="btn-file">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2.5 9.5v1.5a1 1 0 001 1h7a1 1 0 001-1V9.5M7 2v6M4.5 4.5L7 2l2.5 2.5"/>
+              </svg>
+              파일 선택
+            </label>
+            <button class="btn-load" onclick="LoadModel()">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M7 1v8M4 6l3 3 3-3M2.5 11h9"/>
+              </svg>
+              모델 불러오기
+            </button>
+          </div>
+        </div>
+
+        <!-- 파일 목록 -->
+        <div class="card filelist-card">
+          <div class="filelist-header">
+            <span class="filelist-title">선택된 파일</span>
+            <span class="filelist-count" id="fileCount">—</span>
+          </div>
+          <div class="filelist-scroll" id="fileListContent">
+            <div class="empty-hint">파일을 선택하면<br>여기에 표시됩니다</div>
+          </div>
+        </div>
+
+      </div><!-- /sidebar -->
+
+      <!-- Unity 캔버스 -->
+      <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas" width=1000 height=1000 tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+          <div id="unity-logo"></div>
+          <div id="unity-progress-bar-empty">
+            <div id="unity-progress-bar-full"></div>
+          </div>
+        </div>
+        <div id="unity-warning"> </div>
+      </div>
+
+    </div><!-- /layout -->
+
     <script>
       var canvas = document.querySelector("#unity-canvas");
 
@@ -291,235 +494,156 @@
         document.querySelector("#unity-container").className = "unity-mobile";
         canvas.className = "unity-mobile";
       } else {
-     canvas.style.width = "1100px";
+        canvas.style.width = "1100px";
         canvas.style.height = "800px";
       }
 
-       document.querySelector("#unity-loading-bar").style.display = "block";
+      document.querySelector("#unity-loading-bar").style.display = "block";
 
-    var script = document.createElement("script");
-    var myGameInstance = null;
+      var script = document.createElement("script");
+      var myGameInstance = null;
 
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-      }).then((unityInstance) => {
-        myGameInstance = unityInstance;
-        window.Module = unityInstance.Module;
-        document.querySelector("#unity-loading-bar").style.display = "none";
-      }).catch((message) => {
-        alert(message);
-      });
-    };
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          myGameInstance = unityInstance;
+          window.Module = unityInstance.Module;
+          document.querySelector("#unity-loading-bar").style.display = "none";
+        }).catch((message) => {
+          alert(message);
+        });
+      };
 
       document.body.appendChild(script);
 
-    function LoadModel() {
-      const fileInput = document.getElementById('ModelUpload');
-      const files = fileInput.files;
-
-      if (!files || files.length === 0) {
-        console.log('파일이 선택되지 않았습니다.');
-        return;
-      }
-
-      let urlList = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        var objectURL = URL.createObjectURL(file);
-        var bundleName = file.name.replace(".unity3d", "");
-        objectURL = objectURL + "$" + bundleName
-        urlList.push(objectURL);
-      }
-
-      const joinedURL = urlList.join("|");
-      myGameInstance.SendMessage('JustOpen', 'LoadFileList', joinedURL);
-      console.log("Send to Unity:", joinedURL);
-    }
-
-function WebCanvasCapture(ptr, size, imgFileName) {
-  const Module = window.Module;
-  if (!Module || !Module.HEAPU8) {
-    console.error("Module/HEAPU8 not ready.");
-    return;
-  }
-
-  const safeName = String(imgFileName ?? "capture")
-    .replace(/[\\/:*?"<>|]/g, "_")
-    .trim() || "capture";
-
-  const view = Module.HEAPU8.subarray(ptr, ptr + size);
-  const blob = new Blob([view], { type: "image/png" });
-  const a = document.createElement("a");
-  a.download = safeName.endsWith(".png") ? safeName : (safeName + ".png");
-  const url = URL.createObjectURL(blob);
-  a.href = url;
-  document.body.appendChild(a);
-  a.click();
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-    a.remove();
-  }, 1000);
-}
-  </script>
-
-  <script>
-    const fileInput = document.getElementById('ModelUpload');
-    const fileList = document.getElementById('fileList');
-
-    fileInput.addEventListener('change', function (e) {
-      const files = e.target.files;
-
-      fileList.innerHTML = '<h4>선택된 파일</h4><div class="file-list-content"></div>';
-      const contentDiv = fileList.querySelector('.file-list-content');
-
-      if (files.length === 0) {
-        contentDiv.innerHTML = '<div class="empty-state">파일을 선택하면 여기에 표시됩니다</div>';
-        return;
-      }
-
-      Array.from(files).forEach(file => {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-
-        const fileName = document.createElement('div');
-        fileName.className = 'file-name-text';
-        fileName.textContent = file.name;
-
-        const fileSize = document.createElement('div');
-        fileSize.className = 'file-size';
-        fileSize.textContent = formatFileSize(file.size);
-
-        fileItem.appendChild(fileName);
-        fileItem.appendChild(fileSize);
-        contentDiv.appendChild(fileItem);
-      });
-    });
-
-    function formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    }
-
-function ErrorFunction(jsonStr)
-{
-    const str = (typeof jsonStr === "number") ? UTF8ToString(jsonStr) : String(jsonStr);
-
-  let data;
-  try {
-    data = JSON.parse(str);
-  } catch (e) {
-    console.error("[SendSimpleExcelJson] JSON parse error", e);
-    const errorP = document.getElementById("errorLogOutput");
-    if (errorP) errorP.textContent = "JSON parse error.";
-    return;
-  }
-
-  // 1) 지금 들어온 데이터 형태를 먼저 확인
-  console.log("[debug] typeof data:", typeof data);
-  console.log("[debug] isArray(data):", Array.isArray(data));
-  console.log("[debug] data keys:", (data && typeof data === "object") ? Object.keys(data) : null);
-
-  // 2) modelDataList를 다양한 케이스로 추출
-  const list =
-    Array.isArray(data) ? data :
-    Array.isArray(data?.modelDataList) ? data.modelDataList :
-    Array.isArray(data?.ModelDataList) ? data.ModelDataList :
-    Array.isArray(data?.modelData_list) ? data.modelData_list :
-    [];
-
-  console.log("[debug] model list length:", list.length);
-  if (list[0]) console.log("[debug] first model keys:", Object.keys(list[0]));
-
-  // 3) errorLog 모으기 (키 변형/타입 변형 대응)
-  const allErrorLogs = [];
-
-  for (let i = 0; i < list.length; i++) {
-    const m = list[i] || {};
-    const modelName = (typeof m.modelName === "string") ? m.modelName : `Model#${i}`;
-
-    // errorLog 키 후보들
-    let logs =
-      m.errorLog ?? m.errorLogs ?? m.ErrorLog ?? m.ErrorLogs ?? null;
-
-    // logs가 문자열이면 줄바꿈/쉼표 기준으로 분해(혹시 stringify된 경우)
-    if (typeof logs === "string") {
-      logs = logs.split(/\r?\n|\\n|,/g);
-    }
-
-    if (Array.isArray(logs)) {
-      for (let j = 0; j < logs.length; j++) {
-        const v = logs[j];
-        if (typeof v === "string" && v.trim()) {
-          allErrorLogs.push(`[${modelName}] ${v}`);
+      function LoadModel() {
+        const fileInput = document.getElementById('ModelUpload');
+        const files = fileInput.files;
+        if (!files || files.length === 0) { console.log('파일이 선택되지 않았습니다.'); return; }
+        let urlList = [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          var objectURL = URL.createObjectURL(file);
+          var bundleName = file.name.replace(".unity3d", "");
+          objectURL = objectURL + "$" + bundleName;
+          urlList.push(objectURL);
         }
+        const joinedURL = urlList.join("|");
+        myGameInstance.SendMessage('JustOpen', 'LoadFileList', joinedURL);
+        console.log("Send to Unity:", joinedURL);
       }
-    } else {
-      // 디버그: errorLog가 왜 배열이 아닌지 확인용
-      console.log(`[debug] ${modelName} logs type:`, typeof logs, logs);
-    }
-  }
 
-  console.log("[debug] allErrorLogs:", allErrorLogs);
+      function WebCanvasCapture(ptr, size, imgFileName) {
+        const Module = window.Module;
+        if (!Module || !Module.HEAPU8) { console.error("Module/HEAPU8 not ready."); return; }
+        const safeName = String(imgFileName ?? "capture").replace(/[\\/:*?"<>|]/g, "_").trim() || "capture";
+        const view = Module.HEAPU8.subarray(ptr, ptr + size);
+        const blob = new Blob([view], { type: "image/png" });
+        const a = document.createElement("a");
+        a.download = safeName.endsWith(".png") ? safeName : (safeName + ".png");
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      }
+    </script>
 
-  // 4) 출력
-  const errorP = document.getElementById("errorLogOutput");
-  if (!errorP) return;
+    <script>
+      const fileInput = document.getElementById('ModelUpload');
 
-  errorP.style.whiteSpace = "pre-wrap";
-  errorP.textContent = allErrorLogs.length ? allErrorLogs.join("\n") : "No errors.";
+      fileInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        const contentDiv = document.getElementById('fileListContent');
+        const countEl = document.getElementById('fileCount');
+        if (files.length === 0) {
+          contentDiv.innerHTML = '<div class="empty-hint">파일을 선택하면<br>여기에 표시됩니다</div>';
+          countEl.textContent = '—';
+          return;
+        }
+        countEl.textContent = files.length + '개';
+        contentDiv.innerHTML = '';
+        Array.from(files).forEach(file => {
+          const row = document.createElement('div');
+          row.className = 'file-row';
+          row.innerHTML = `
+            <div class="file-dot"></div>
+            <div class="file-row-name">${file.name}</div>
+            <div class="file-row-size">${formatFileSize(file.size)}</div>
+          `;
+          contentDiv.appendChild(row);
+        });
+      });
 
-}
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+      }
 
-function sendJsonToViewer(json)
-{
-  const viewerUrl = 'https://lclquadbe-art.github.io/JustOpen/log.html';
+      function ErrorFunction(jsonStr) {
+        const str = (typeof jsonStr === "number") ? UTF8ToString(jsonStr) : String(jsonStr);
+        let data;
+        try { data = JSON.parse(str); } catch(e) {
+          const el = document.getElementById("errorLogOutput");
+          if (el) el.textContent = "JSON parse error.";
+          return;
+        }
+        const list =
+          Array.isArray(data) ? data :
+          Array.isArray(data?.modelDataList) ? data.modelDataList :
+          Array.isArray(data?.ModelDataList) ? data.ModelDataList :
+          Array.isArray(data?.modelData_list) ? data.modelData_list : [];
+        const allErrorLogs = [];
+        for (let i = 0; i < list.length; i++) {
+          const m = list[i] || {};
+          const modelName = (typeof m.modelName === "string") ? m.modelName : `Model#${i}`;
+          let logs = m.errorLog ?? m.errorLogs ?? m.ErrorLog ?? m.ErrorLogs ?? null;
+          if (typeof logs === "string") logs = logs.split(/\r?\n|\\n|,/g);
+          if (Array.isArray(logs)) {
+            for (const v of logs) {
+              if (typeof v === "string" && v.trim()) allErrorLogs.push(`[${modelName}] ${v}`);
+            }
+          }
+        }
+        const errorP = document.getElementById("errorLogOutput");
+        if (!errorP) return;
+        errorP.style.whiteSpace = "pre-wrap";
+        errorP.textContent = allErrorLogs.length ? allErrorLogs.join("\n") : "No errors.";
+      }
 
-    localStorage.setItem('modelJsonData', JSON.stringify(json));
-    window.open(viewerUrl, '_blank');
-}
+      function sendJsonToViewer(json) {
+        const viewerUrl = 'https://lclquadbe-art.github.io/JustOpen/log.html';
+        localStorage.setItem('modelJsonData', JSON.stringify(json));
+        window.open(viewerUrl, '_blank');
+      }
 
-let fullLogData = "";
-function WebRenderName(strPtr) {
-  if (!strPtr) return;
+      let fullLogData = "";
+      let logLineCount = 0;
 
-    // 1. 데이터 누적 (+)
-    // strPtr이 Emscripten 포인터라면 UTF8ToString(strPtr) 과정이 필요할 수 있습니다.
-    fullLogData += strPtr;
+      function WebRenderName(strPtr) {
+        if (!strPtr) return;
+        fullLogData += strPtr;
+        logLineCount++;
+        let logContainer = document.getElementById("log-display");
+        if (logContainer) {
+          logContainer.style.display = "block";
+          logContainer.textContent = fullLogData;
+        }
+        const badge = document.getElementById("logBadge");
+        if (badge) badge.textContent = logLineCount + '줄';
+      }
 
-    // 2. 컨테이너 가져오기 혹은 생성
-    let logContainer = document.getElementById("log-display");
-    if (!logContainer) {
-        logContainer = document.createElement("pre");
-        logContainer.id = "log-display";
-        logContainer.style.whiteSpace = "pre-wrap";
-        logContainer.style.fontFamily = "monospace";
-        logContainer.style.border = "1px solid #ccc";
-        logContainer.style.padding = "10px";
-        document.body.appendChild(logContainer);
-    }
-
-    // 3. 전체 내용을 한 번에 업데이트
-    // textContent는 HTML 태그를 해석하지 않아 안전하고 빠릅니다.
-    logContainer.textContent = fullLogData;
-
-    // (선택 사항) 로그가 추가될 때마다 화면을 가장 아래로 스크롤합니다.
-    //window.scrollTo(0, document.body.scrollHeight);
-    }
-
-  </script>
-
-    <p style="color:#fca41f;" id="errorLogOutput"> </p>
- <p id="jsonOutput"> </p>
- <p style="color:#667eea;" id="jsonSimpleOutput"> </p>
- <div id="log-container"></div>
-
-
-</body>
+      function toggleLog() {
+        const btn = document.getElementById("logToggleBtn");
+        const body = document.getElementById("logBody");
+        btn.classList.toggle("open");
+        body.classList.toggle("open");
+      }
+    </script>
+  </body>
 </html>
